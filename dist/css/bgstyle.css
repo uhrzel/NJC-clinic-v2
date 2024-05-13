@@ -1,0 +1,10 @@
+/* Assuming this is your bgstyle.css file */
+
+/* Set the background image */
+body {
+    background-image: url('../dist/img/SCVSLOGO.jpg');
+    /* Adjust background size to cover the entire viewport */
+    background-size: cover;
+    /* Add a red background color with 50% opacity */
+    background-color: rgba(255, 0, 0, 0.5);
+}
