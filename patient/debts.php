@@ -336,7 +336,8 @@
                                                 <th>Time</th>
                                                 <th>Problem</th>
                                                 <th>Payment</th>
-                                                <th>Action</th>
+                                                <th>Status</th>
+                                                <!--  <th>Action</th> -->
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -364,17 +365,20 @@
                                                         $patientSql = "SELECT CONCAT(firstname, ' ', middlename, ' ', lastname) AS patient_name FROM patient WHERE patient_id = $patientId";
                                                         $patientResult = mysqli_query($conn, $patientSql);
                                                         $patientRow = mysqli_fetch_assoc($patientResult);
+
                                                         echo "<td>" . $patientRow['patient_name'] . "</td>";
 
                                                         echo "<td><button class='timeBtn btn-sm btn-success'>" . $row['date'] . "</button></td>";
                                                         echo "<td>" . $row['time'] . "</td>";
                                                         echo "<td>" . $row['problem'] . "</td>";
                                                         echo "<td>" . $row['payment'] . "</td>";
+                                                        if ($row['bill_generate'] == 'prescription unchecked')
+                                                            echo "<td>" . 'No payment' . "</td>";
 
-                                                        // Action icons (update and delete)
                                                         echo "<td>";
                                                         // Edit button
-                                                        echo "<a href='#' class='editSchedule btn-sm btn-info' data-id='" . $row['id'] . "' data-toggle='modal' data-target='#generateBillModal'><i class='fas fa-file-invoice'></i> checkout</a>&nbsp;&nbsp;";
+                                                        /*   echo "<a href='#' class='editSchedule btn-sm btn-info' data-id='" . $row['id'] . "' data-toggle='modal' data-target='#generateBillModal'><i class='fas fa-file-invoice'></i> checkout</a>&nbsp;&nbsp;";
+                                                  */
                                                         echo "</td>";
                                                         echo "</tr>";
                                                     }

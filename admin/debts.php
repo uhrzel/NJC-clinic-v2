@@ -206,7 +206,6 @@
         </aside>
 
 
-        <script src="https://www.paypal.com/sdk/js?client-id=<?php echo $paypalClientId; ?>&currency=PHP"></script>
         <!-- Modal for generating bill receipt -->
         <div class="modal fade" id="generateBillModal" tabindex="-1" role="dialog" aria-labelledby="generateBillModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
@@ -223,9 +222,7 @@
                         <ul id="problemList"></ul>
                         <p><strong>Total Amount Paid:</strong> <span id="receiptAmount"></span></p>
                         <p><strong>Payment Date:</strong> <span id="receiptDate"></span></p>
-                        <div id="paypal-button-container"></div>
-                        <input type="hidden" id="paypal-order-id" name="paypal-order-id">
-                        <input type="hidden" id="scheduleId" name="scheduleId">
+
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -318,6 +315,7 @@
                                                 <th>Problem</th>
                                                 <th>Payment</th>
                                                 <th>Status</th>
+                                                <th>Payment</th>
 
                                             </tr>
                                         </thead>
@@ -356,6 +354,8 @@
 
                                                     // Action icons (update and delete)
                                                     echo "<td>";
+                                                    echo "<a href='#' class='editSchedule btn-sm btn-info' data-id='" . $row['id'] . "' data-toggle='modal' data-target='#generateBillModal'><i class='fas fa-file-invoice'></i> checkout</a>&nbsp;&nbsp;";
+
                                                     // Edit button
                                                     echo "</td>";
                                                     echo "</tr>";
