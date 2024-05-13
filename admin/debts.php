@@ -220,9 +220,12 @@
                         <h5 style="text-align: center; font-size: 1.25rem;">NJC - Dental Clinic <span id="receiptType"></span> Checkout</h5>
                         <p><strong>Patient Name:</strong> <span id="patientName"></span></p>
                         <ul id="problemList"></ul>
+                        <div class="form-group">
+                            <label for="paymentAmount">Payment Amount:</label>
+                            <input type="number" class="form-control" id="paymentAmount" placeholder="Enter amount">
+                        </div>
                         <p><strong>Total Amount Paid:</strong> <span id="receiptAmount"></span></p>
                         <p><strong>Payment Date:</strong> <span id="receiptDate"></span></p>
-
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -231,6 +234,7 @@
                 </div>
             </div>
         </div>
+
 
         <div class="modal fade" id="paymentSuccessModal" tabindex="-1" role="dialog" aria-labelledby="paymentSuccessModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
@@ -328,7 +332,7 @@
                                             $sql = "SELECT schedule.*, CONCAT(patient.firstname, ' ', patient.middlename, ' ', patient.lastname) AS patient_name 
         FROM schedule 
         INNER JOIN patient ON schedule.patient_id = patient.patient_id
-        WHERE schedule.bill_generate = 'done' OR schedule.bill_generate = 'Payment Done'";
+        WHERE schedule.bill_generate = 'prescription unchecked'";
                                             $result = mysqli_query($conn, $sql);
 
                                             // Check if there are any rows returned
@@ -345,16 +349,14 @@
 
                                                     // Display status based on bill_generate value
                                                     echo "<td>";
-                                                    if ($row['bill_generate'] == 'done') {
-                                                        echo "Done transaction";
-                                                    } elseif ($row['bill_generate'] == 'Payment Done') {
-                                                        echo "Paid";
+                                                    if ($row['bill_generate'] == 'prescription unchecked') {
+                                                        echo "Need to pay";
                                                     }
                                                     echo "</td>";
 
                                                     // Action icons (update and delete)
                                                     echo "<td>";
-                                                    echo "<a href='#' class='editSchedule btn-sm btn-info' data-id='" . $row['id'] . "' data-toggle='modal' data-target='#generateBillModal'><i class='fas fa-file-invoice'></i> checkout</a>&nbsp;&nbsp;";
+                                                    echo "<a href='#' class='editSchedule btn-sm btn-info' data-id='" . $row['id'] . "' data-payment='" . $row['payment'] . "' data-toggle='modal' data-target='#generateBillModal'><i class='fas fa-file-invoice'></i> checkout</a>&nbsp;&nbsp;";
 
                                                     // Edit button
                                                     echo "</td>";
@@ -430,24 +432,20 @@
         $('.editSchedule').click(function() {
             // Extract data from the table row
             var scheduleId = $(this).data('id');
+            var initialPayment = parseFloat($(this).data('payment')); // Parse initial payment amount to float
+            var receiptAmount = parseFloat($(this).closest('tr').find('td:nth-child(6)').text().replace('₱', '')); // Parse the amount to float
 
-            // Extract data from the table row
-            var patientName = $(this).closest('tr').find('td:nth-child(2)').text();
-            var receiptAmount = '₱' + $(this).closest('tr').find('td:nth-child(6)').text(); // Include peso sign
-            var receiptDate = $(this).closest('tr').find('td:nth-child(3)').text();
-            var problemData = $(this).closest('tr').find('td:nth-child(5)').text().split(', '); // Assuming problem data is separated by comma
+            // Calculate the remaining amount by subtracting the initial payment from the total amount
+            var remainingAmount = receiptAmount - initialPayment;
 
             // Update the modal content with the extracted data
-            $('#receiptType').text('Dental Services');
-            $('#patientName').text(patientName);
-            $('#receiptAmount').text(receiptAmount);
-            $('#receiptDate').text(receiptDate);
+            $('#receiptAmount').text('₱' + remainingAmount.toFixed(2)); // Display the remaining amount as currency
 
             // Clear any existing problem list items
             $('#problemList').empty();
 
             // Add each problem as a list item to the problem list
-            problemData.forEach(function(problem) {
+            $(this).closest('tr').find('td:nth-child(5)').text().split(', ').forEach(function(problem) {
                 $('#problemList').append('<li>' + problem + '</li>');
             });
 
@@ -457,6 +455,61 @@
             // Show the modal
             $('#generateBillModal').modal('show');
         });
+
+        $('#generateBillButton').click(function() {
+            var paymentAmount = parseFloat($('#paymentAmount').val()); // Parse the payment amount to float
+
+            // Subtract the payment amount from the remaining amount
+            var remainingAmount = parseFloat($('#receiptAmount').text().replace('₱', '')) - paymentAmount;
+
+            // Get the schedule ID value
+            var scheduleId = $('#scheduleId').val();
+
+            // Update the payment data in the database via AJAX
+            $.ajax({
+                url: 'update_payment.php', // URL to your PHP script for updating payment data
+                type: 'POST',
+                data: {
+                    scheduleId: scheduleId,
+                    paymentAmount: paymentAmount
+                },
+                dataType: 'json', // Expect JSON response
+                success: function(response) {
+                    // Check if the update was successful
+                    if (response.success) {
+                        // Update the displayed remaining amount
+                        $('#receiptAmount').text('₱' + remainingAmount.toFixed(2)); // Display the new remaining amount as currency
+
+                        // Display success message using SweetAlert
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: response.message,
+                        }).then((result) => {
+                            // Close the modal
+                            $('#generateBillModal').modal('hide');
+                        });
+                    } else {
+                        // Display error message if update failed
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: response.message,
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    // Display error message if AJAX request fails
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'An error occurred while updating payment data.',
+                    });
+                    console.error('An error occurred while updating payment data:', error);
+                }
+            });
+        });
+
 
         // JavaScript/jQuery code to handle the "Generate Bill" button click event
         $('#generateBillButton').click(function() {
